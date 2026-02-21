@@ -104,3 +104,29 @@ exports.updateBookingStatus = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Cancel (delete) a booking
+// @route   DELETE /bookings/:id
+exports.cancelBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+        // Only owner can cancel
+        if (booking.email !== req.user.email) {
+            return res.status(403).json({ message: 'Not authorized to cancel this booking' });
+        }
+
+        // Only allow cancellation of Pending bookings
+        if (booking.status !== 'Pending') {
+            return res.status(400).json({ message: 'Only pending bookings can be cancelled' });
+        }
+
+        await Booking.findByIdAndDelete(req.params.id);
+
+        res.status(204).json({ message: 'Booking cancelled successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
